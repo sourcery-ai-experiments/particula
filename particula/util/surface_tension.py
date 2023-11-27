@@ -13,12 +13,10 @@ def water(
     and Mares (2018).
 
     Args:
-    ----------
         Temperature : float, Ambient temperature of air
         CritTemp : float, optional: Critical temperature of water
 
     Returns:
-    -------
         sigma : float, Surface tension of water at the given temperature
     """
     temperature = in_temperature(temperature)
@@ -38,12 +36,10 @@ def dry_mixing(volume_fractions, surface_tensions):
     """Function to calculate the effective surface tension of a dry mixture.
 
     Args:
-    ----------
     volume_fractions : array, volume fractions of solutes
     surface_tensions : array, surface tensions of solutes
 
     Returns:
-    --------
     sigma : array, surface tension of droplet
     """
     volume_fractions = in_scalar(volume_fractions)
@@ -66,7 +62,6 @@ def wet_mixing(
     """Function to calculate the effective surface tension of a wet mixture.
 
     Args:
-    ----------
     volume_solute : array, volume of solute mixture
     volume_water : array, volume of water
     surface_tension_solute : array, surface tension of solute mixture
@@ -75,7 +70,6 @@ def wet_mixing(
         surface tension
 
     Returns:
-    --------
     EffSigma : array, effective surface tension of droplet
     """
 
