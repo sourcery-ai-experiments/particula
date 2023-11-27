@@ -3,7 +3,7 @@
 
 import pytest
 from particula import u
-from particula.util.mean_free_path import mfp
+from particula.util.mean_free_path import mfp, mfp_strict
 
 
 def test_mfp():
@@ -40,3 +40,13 @@ def test_mfp():
             pressure=101325*u.Pa,
             molecular_weight=0.03*u.m/u.mol,
             )
+
+
+def test_mfp_strict():
+    """test the strict version of the mean free path"""
+    ref = mfp(temperature=298*u.K, pressure=101325 * u.Pa).m
+    strict_mfp = mfp_strict(
+        temperature_kelvin=298.0,
+        pressure_pascal=101325.0,
+    )
+    assert strict_mfp == ref

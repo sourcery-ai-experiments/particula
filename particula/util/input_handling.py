@@ -73,7 +73,7 @@ def in_handling(value, units: u.Quantity):
     return value
 
 
-def convert_units(old, new):
+def convert_units(old: str, new: str) -> float:
     """ generic pint function to convert units
 
         Args:
@@ -103,7 +103,7 @@ def convert_units(old, new):
             f"otherwise, if dimensionless, it will\n\t"
             f"be assigned {new}.\n"
         )
-    return new.m
+    return float(new.m)
 
 
 # pylint: disable=missing-docstring, multiple-statements

@@ -10,19 +10,26 @@
     TODO:
         add size checks for pressure--temperature pairs
         to ensure that they match; otherwise, an error will occur
-        or use broadcast (though this is likely not a good idea)?
+        or use broadcast (though this is likely not a good idea, no great idea)
         perhaps allow for a height--temperature--pressure dependency
         somewhere? this could be import for @Gorkowski's parcels...
         (likely through a different utility function...)
 """
+from typing import Union, Optional
 
 import numpy as np
 from particula import u
-from particula.constants import GAS_CONSTANT, MOLECULAR_WEIGHT_AIR
-from particula.util.dynamic_viscosity import dyn_vis
+from particula.constants import (
+    GAS_CONSTANT,
+    MOLECULAR_WEIGHT_AIR,
+    MOLECULAR_WEIGHT_AIR_KILOGRAM_MOLE,
+    GAS_CONSTANT_JOULE_KELVIN_MOLE,
+)
+from particula.util.dynamic_viscosity import dyn_vis, dyn_vis_strict
 from particula.util.input_handling import (in_gas_constant,
                                            in_molecular_weight, in_pressure,
-                                           in_temperature, in_viscosity)
+                                           in_temperature, in_viscosity,
+                                           convert_units)
 
 
 def mfp(
@@ -126,3 +133,36 @@ def mfp(
         (2 * dyn_vis_val / pres) /
         (8 * molec_wt / (np.pi * gas_con * temp))**0.5
     ).to_base_units()
+
+
+def mfp_strict(
+    temperature_kelvin: Union[float, np.ndarray],
+    pressure_pascal: Union[float, np.ndarray],
+    molecular_weight_kilogram_mole=MOLECULAR_WEIGHT_AIR_KILOGRAM_MOLE,
+    output_unit: Optional[str] = None
+) -> Union[float, np.ndarray]:
+    """ Returns the mean free path of molecule in air. (strict)
+    If you want units to be handled automatically, use mfp() instead.
+
+    Args:
+        temperature_kelvin      (float) [K]
+        pressure_pascal         (float) [Pa]
+        molecular_weight_kilogram_mole (float) [kg/mol]
+        output_unit             (str)   [m]     (default: None)
+
+    Returns:
+        (float) [m/s] or output_unit
+    """
+    dyn_vis_val = dyn_vis_strict(
+        temperature_kelvin=temperature_kelvin
+    )
+
+    unit_multiplier = 1
+    if output_unit is not None:
+        unit_multiplier = convert_units(old='m/s', new=output_unit)
+
+    return (
+        (2 * dyn_vis_val / pressure_pascal) /
+        (8 * molecular_weight_kilogram_mole /
+         (np.pi * GAS_CONSTANT_JOULE_KELVIN_MOLE * temperature_kelvin))**0.5
+    ) * unit_multiplier

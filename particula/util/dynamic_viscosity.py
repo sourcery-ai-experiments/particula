@@ -12,10 +12,17 @@
         https://resources.wolframcloud.com/FormulaRepository/resources/Sutherlands-Formula
 
 """
+from typing import Union, Optional
+from numpy import ndarray
+
 from particula import u
 from particula.constants import (REF_TEMPERATURE_STP, REF_VISCOSITY_AIR_STP,
-                                 SUTHERLAND_CONSTANT)
+                                 SUTHERLAND_CONSTANT,
+                                 REF_VISCOSITY_AIR_STP_PASCAL_SECOND,
+                                 REF_TEMPERATURE_STP_KELVIN,
+                                 SUTHERLAND_CONSTANT_KELVIN)
 from particula.util.input_handling import in_temperature, in_viscosity
+from particula.util.input_handling import convert_units
 
 
 def dyn_vis(
@@ -57,7 +64,7 @@ def dyn_vis(
         array([1.32849751e-05, 1.59905239e-05, 1.84591625e-05, 2.28516090e-05])
         ```
 
-        Inputs:
+        Args:
             temperature             (float) [K]     (default: 298.15)
             reference_viscosity     (float) [Pa*s]  (default: constants)
             reference_temperature   (float) [K]     (default: constants)
@@ -70,7 +77,6 @@ def dyn_vis(
             REF_VISCOSITY_AIR_STP   (float) [Pa*s]
             REF_TEMPERATURE_STP     (float) [K]
             SUTHERLAND_CONSTANT     (float) [K]
-
     """
     # trick to avoid triggering a linting error for kwargs
     temp = kwargs.get("temperature", temperature)
@@ -85,3 +91,31 @@ def dyn_vis(
         (ref_temp + suth_const) /
         (temp + suth_const)
     ).to_base_units()
+
+
+def dyn_vis_strict(
+        temperature_kelvin: Union[float, ndarray] = 298.15,
+        viscosity_unit: Optional[str] = None,
+) -> Union[float, ndarray]:
+    """
+        Strick version of dynamic viscosity of air via Sutherland formula.
+        With no units, all inputs and outputs are floats. For units,
+        use dynamic_viscosity.dyn_vis().
+
+    Args:
+        temperature_kevlin: temperature in Kelvin
+
+    Returns:
+        dynamic viscosity in units of Pa*s or the units specified by the
+        viscosity_unit argument
+    """
+    unit_multiplier = 1
+    if viscosity_unit is not None:
+        unit_multiplier = convert_units('Pa*s', viscosity_unit)
+
+    return (
+        REF_VISCOSITY_AIR_STP_PASCAL_SECOND *
+        (temperature_kelvin/REF_TEMPERATURE_STP_KELVIN)**(3/2) *
+        (REF_TEMPERATURE_STP_KELVIN + SUTHERLAND_CONSTANT_KELVIN) /
+        (temperature_kelvin + SUTHERLAND_CONSTANT_KELVIN)
+    ) * unit_multiplier
