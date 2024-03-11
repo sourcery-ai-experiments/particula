@@ -688,7 +688,7 @@ def save_stream_to_csv(
 def save_stream(
     path: str,
     stream: Stream,
-    sufix_name: Optional[str] = None,
+    suffix_name: Optional[str] = None,
     folder: Optional[str] = 'output'
 ) -> None:
     """
@@ -700,7 +700,7 @@ def save_stream(
         Stream object to be saved.
     path : str
         Path to save pickle file.
-    sufix_name : str, optional
+    suffix_name : str, optional
         Suffix to add to pickle file name. The default is None.
     """
     # Validate path
@@ -712,8 +712,8 @@ def save_stream(
     os.makedirs(output_folder, exist_ok=True)
 
     # add suffix to file name if present
-    file_name = f'stream{sufix_name}.pk' \
-        if sufix_name is not None else 'stream.pk'
+    file_name = f'stream{suffix_name}.pk' \
+        if suffix_name is not None else 'stream.pk'
     # path to save pickle file
     file_path = os.path.join(output_folder, file_name)
 
@@ -735,7 +735,7 @@ def save_stream(
 
 def load_stream(
     path: str,
-    sufix_name: Optional[str] = None,
+    suffix_name: Optional[str] = None,
     folder: Optional[str] = 'output'
 ) -> Stream:
     """
@@ -745,7 +745,7 @@ def load_stream(
     ----------
     path : str
         Path to load pickle file.
-    sufix_name : str, optional
+    suffix_name : str, optional
         Suffix to add to pickle file name. The default is None.
     folder : str, optional
         Folder to load pickle file from. The default is 'output'.
@@ -759,8 +759,8 @@ def load_stream(
     if not os.path.isdir(path):
         raise ValueError(f"Provided path '{path}' is not a directory.")
     # add suffix to file name if present
-    file_name = f'stream{sufix_name}.pk' \
-        if sufix_name is not None else 'stream.pk'
+    file_name = f'stream{suffix_name}.pk' \
+        if suffix_name is not None else 'stream.pk'
     # path to load pickle file
     file_path = os.path.join(path, folder, file_name)
 
@@ -774,7 +774,7 @@ def load_stream(
 def save_lake(
     path: str,
     lake: Lake,
-    sufix_name: Optional[str] = None,
+    suffix_name: Optional[str] = None,
     folder: Optional[str] = 'output'
 ) -> None:
     """
@@ -786,7 +786,7 @@ def save_lake(
         DataLake object to be saved.
     path : str
         Path to save pickle file.
-    sufix_name : str, optional
+    suffix_name : str, optional
         Suffix to add to pickle file name. The default is None.
     """
     print('Saving lake...')
@@ -798,8 +798,8 @@ def save_lake(
     os.makedirs(output_folder, exist_ok=True)
 
     # add suffix to file name if present
-    file_name = f'lake{sufix_name}.pk' \
-        if sufix_name is not None else 'lake.pk'
+    file_name = f'lake{suffix_name}.pk' \
+        if suffix_name is not None else 'lake.pk'
     # path to save pickle file
     file_path = os.path.join(output_folder, file_name)
 
@@ -821,7 +821,7 @@ def save_lake(
 
 def load_lake(
     path: str,
-    sufix_name: Optional[str] = None
+    suffix_name: Optional[str] = None
 ) -> Lake:
     """
     Load datalake object from a pickle file.
@@ -836,8 +836,8 @@ def load_lake(
     data_lake : DataLake
         Loaded DataLake object.
     """
-    file_name = f'lake{sufix_name}.pk' \
-        if sufix_name is not None else 'lake.pk'
+    file_name = f'lake{suffix_name}.pk' \
+        if suffix_name is not None else 'lake.pk'
     # path to load pickle file
     file_path = os.path.join(path, 'output', file_name)
 

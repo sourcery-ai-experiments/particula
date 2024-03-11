@@ -15,7 +15,7 @@ stream = Stream(
     data=np.array([1, 2, 4]),
     time=np.array([1.0, 2.0, 4.0]),
     files=['file1', 'file3']
-    )
+)
 
 
 def test_filter_list():
@@ -229,7 +229,7 @@ def test_save_stream(tmpdir):
     assert os.path.isfile(file_path)
 
     # Test saving stream with suffix
-    loader.save_stream(str(tmpdir), stream, sufix_name='_test')
+    loader.save_stream(str(tmpdir), stream, suffix_name='_test')
     file_path = os.path.join(test_dir, 'stream_test.pk')
     assert os.path.isfile(file_path)
 

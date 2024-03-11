@@ -78,9 +78,13 @@ class Stream:
         if isinstance(index, str):
             if index not in self.header:
                 self.header.append(index)  # add new header element
+                # if value is a 1D array, extend axis to 2D
+                if len(value.shape) == 1:
+                    value = value[:, np.newaxis]
                 self.data = np.hstack((self.data, value))
+                return  # exit function
             index = self.header.index(index)
-        # if index is an int, set the data at that index
+            # if index is an int, set the data at that index
         self.data[:, index] = value
 
     def __len__(self):

@@ -12,6 +12,10 @@ from scipy.integrate import trapz
 from particula.util import convert
 from particula.data.process import mie_angular, mie_bulk
 
+# Constants for discretization in truncation calculations
+DISCRETIZATION_RI = 0.02
+DISCRETIZATION_DIAMETER = 50
+
 
 def get_truncated_scattering(
     scattering_unpolarized: np.ndarray,
@@ -120,7 +124,9 @@ def trunc_mono(
         m_sphere, wavelength, diameter = mie_bulk.discretize_mie_parameters(
             m_sphere=m_sphere,
             wavelength=wavelength,
-            diameter=diameter
+            diameter=diameter,
+            base_m_sphere=DISCRETIZATION_RI,
+            base_diameter=DISCRETIZATION_DIAMETER,
         )
 
     # Choose the appropriate scattering function based on discretization
@@ -228,7 +234,10 @@ def truncation_for_diameters(
             mie_bulk.discretize_mie_parameters(
                 m_sphere=m_sphere,
                 wavelength=wavelength,
-                diameter=diameter_sizes)
+                diameter=diameter_sizes,
+                base_m_sphere=DISCRETIZATION_RI,
+                base_diameter=DISCRETIZATION_DIAMETER,
+                )
 
     # For each diameter, calculate the truncation correction
     for i, diameter in enumerate(diameter_sizes):
@@ -472,7 +481,7 @@ def correction_for_humidified_looped(
 
     # Iterate over each time index to apply the scattering correction
     for index, row_number_per_cm3 in tqdm(enumerate(number_per_cm3),
-                                          'Processing Scattering Correction'):
+                                          'Trunc. Calc.'):
         if skip_data[index]:
             # Assign NaN for indices with incomplete data
             correction_multiple[index] = np.nan
