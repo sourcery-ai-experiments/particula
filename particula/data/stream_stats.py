@@ -173,36 +173,46 @@ def filtering(
     return stream
 
 
-def remove_time_window(
+def time_window(
         stream: Stream,
         epoch_start: Union[float, int],
         epoch_end: Optional[Union[float, int]] = None,
+        action: str = 'remove',
 ) -> Stream:
     """
-    Remove a time window from a stream object.
+    Process a time window from a stream object by either selecting or
+    removing it.
 
     Args:
-    - stream: The input stream object containing 'data' and 'time'
-        attributes.
-    - epoch_start: The start time of the time window to be
-        removed.
-    - epoch_end: The end time of the time window to be
-        removed. If not provided, the time window is the closest time point to
-        'epoch_start'.
+    - stream: The input stream object containing 'data' and 'time' attributes.
+    - epoch_start: The start time of the time window to be processed.
+    - epoch_end: The end time of the time window to be processed. If not
+    provided, operates on the closest time point to 'epoch_start'.
+    - action: The action to perform on the time window ('select' or 'remove').
 
     Returns:
-    - Stream: The 'stream' object with the specified time window removed.
+    - Stream: The modified 'stream' object after processing the time window.
     """
     # get index of start time
     index_start = np.argmin(np.abs(stream.time - epoch_start))
     if epoch_end is None:
-        # if no end time provided, remove the closest time point
-        stream.time = np.delete(stream.time, index_start)
-        stream.data = np.delete(stream.data, index_start, axis=0)
-        return stream
-    # get index of end time
-    index_end = np.argmin(np.abs(stream.time - epoch_end)) + 1
-    # remove time and data between start and end times
-    stream.time = np.delete(stream.time, slice(index_start, index_end))
-    stream.data = np.delete(stream.data, slice(index_start, index_end), axis=0)
+        index_end = index_start + 1
+    else:
+        # get index of end time, inclusive
+        index_end = np.argmin(np.abs(stream.time - epoch_end)) + 1
+
+    if action == 'remove':
+        # remove time and data between start and end times
+        stream.time = np.delete(stream.time, slice(index_start, index_end))
+        stream.data = np.delete(
+            stream.data, slice(
+                index_start, index_end), axis=0)
+    elif action == 'select':
+        # select time and data between start and end times
+        stream.time = stream.time[index_start:index_end]
+        stream.data = stream.data[index_start:index_end]
+    else:
+        raise ValueError(
+            f"Invalid action '{action}'. Use 'select' or 'remove'.")
+
     return stream

@@ -8,7 +8,7 @@ from particula.util import input_handling
 
 def time_str_to_epoch(
         time: str,
-        time_format: str,
+        time_format: str = '%Y-%m-%d %H:%M',
         timezone_identifier: str = 'UTC',
 ) -> float:
     """Convert to UTC (epoch) timezone from all inputs. Using pytz library,
