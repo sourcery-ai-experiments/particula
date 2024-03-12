@@ -209,7 +209,7 @@ def test_save_stream_to_csv(tmpdir):
     loader.save_stream_to_csv(
         stream,
         str(tmpdir),
-        suffix_name="_suffix")
+        suffix="_suffix")
     # Assert that the file was created with the expected name and location
     assert os.path.isfile(expected_file_path)
 
@@ -229,7 +229,7 @@ def test_save_stream(tmpdir):
     assert os.path.isfile(file_path)
 
     # Test saving stream with suffix
-    loader.save_stream(str(tmpdir), stream, suffix_name='_test')
+    loader.save_stream(str(tmpdir), stream, suffix='_test')
     file_path = os.path.join(test_dir, 'stream_test.pk')
     assert os.path.isfile(file_path)
 
@@ -258,10 +258,10 @@ def test_load_stream_valid_path(tmpdir):
 def test_load_stream_valid_path_with_suffix(tmpdir):
     """Test loading a stream with a suffix."""
     # Arrange
-    suffix_name = '_suffix'
+    suffix = '_suffix'
     # Test saving stream without suffix
-    loader.save_stream(str(tmpdir), stream, suffix_name)
-    result = loader.load_stream(str(tmpdir), suffix_name)
+    loader.save_stream(str(tmpdir), stream, suffix)
+    result = loader.load_stream(str(tmpdir), suffix)
     # Assert
     assert np.allclose(result.data, stream.data)
     assert result.header == stream.header
