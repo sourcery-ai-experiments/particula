@@ -4,6 +4,10 @@ from abc import ABC, abstractmethod
 import numpy as np
 from numpy.typing import NDArray
 
+# From Particula
+from particula.next.particle_activity import ParticleActivityStrategy
+from particula.next.surface import SurfaceStrategy
+
 
 class ParticleStrategy(ABC):
     """
@@ -15,137 +19,183 @@ class ParticleStrategy(ABC):
     @abstractmethod
     def get_mass(
         self,
-        distribution: NDArray[np.float64],
-        density: NDArray[np.float64]
-    ) -> NDArray[np.float64]:
+        distribution: NDArray[np.float_],
+        density: NDArray[np.float_]
+    ) -> NDArray[np.float_]:
         """
         Calculates the mass of particles based on their distribution and
         density.
 
         Parameters:
-        - distribution (NDArray[np.float64]): The distribution of particle
+        - distribution (NDArray[np.float_]): The distribution of particle
             sizes or masses.
-        - density (NDArray[np.float64]): The density of the particles.
+        - density (NDArray[np.float_]): The density of the particles.
 
         Returns:
-        - NDArray[np.float64]: The mass of the particles.
+        - NDArray[np.float_]: The mass of the particles.
         """
 
     @abstractmethod
     def get_radius(
         self,
-        distribution: NDArray[np.float64],
-        density: NDArray[np.float64]
-    ) -> NDArray[np.float64]:
+        distribution: NDArray[np.float_],
+        density: NDArray[np.float_]
+    ) -> NDArray[np.float_]:
         """
         Calculates the radius of particles based on their distribution and
         density.
 
         Parameters:
-        - distribution (NDArray[np.float64]): The distribution of particle
+        - distribution (NDArray[np.float_]): The distribution of particle
             sizes or masses.
-        - density (NDArray[np.float64]): The density of the particles.
+        - density (NDArray[np.float_]): The density of the particles.
 
         Returns:
-        - NDArray[np.float64]: The radius of the particles.
+        - NDArray[np.float_]: The radius of the particles.
         """
 
     @abstractmethod
     def get_total_mass(
         self,
-        distribution: NDArray[np.float64],
-        concentration: NDArray[np.float64],
-        density: NDArray[np.float64]
-    ) -> np.float64:
+        distribution: NDArray[np.float_],
+        concentration: NDArray[np.float_],
+        density: NDArray[np.float_]
+    ) -> np.float_:
         """
         Calculates the total mass of particles based on their distribution,
         concentration, and density.
 
         Parameters:
-        - distribution (NDArray[np.float64]): The distribution of particle
+        - distribution (NDArray[np.float_]): The distribution of particle
             sizes or masses.
-        - concentration (NDArray[np.float64]): The concentration of each
+        - concentration (NDArray[np.float_]): The concentration of each
             particle size or mass in the distribution.
-        - density (NDArray[np.float64]): The density of the particles.
+        - density (NDArray[np.float_]): The density of the particles.
 
         Returns:
-        - np.float64: The total mass of the particles.
+        - np.float_: The total mass of the particles.
+        """
+
+    @abstractmethod
+    def add_mass(
+        self,
+        distribution: NDArray[np.float_],
+        concentration: NDArray[np.float_],
+        density: NDArray[np.float_],
+        added_mass: NDArray[np.float_]
+    ) -> tuple[NDArray[np.float_], NDArray[np.float_]]:
+        """
+        Adds mass to the distribution of particles based on their distribution,
+        concentration, and density.
+
+        Parameters:
+        - distribution (NDArray[np.float_]): The distribution representation
+        of particles
+        - concentration (NDArray[np.float_]): The concentration of each
+        particle in the distribution.
+        - density (NDArray[np.float_]): The density of the particles.
+        - added_mass (NDArray[np.float_]): The mass to be added per
+        distribution bin.
+
+        Returns:
+        - NDArray[np.float_]: The new concentration array.
+        - NDArray[np.float_]: The new distribution array.
         """
 
 
-class MassBasedStrategy(ParticleStrategy):
+class MassBasedMovingBin(ParticleStrategy):
     """
     A strategy for particles represented by their mass distribution, and
-    particle number concentration. This class provides the implementation
-    of the methods for ParticleStrategy.
+    particle number concentration. Moving the bins when adding mass.
     """
 
     def get_mass(
-            self,
-            distribution: NDArray[np.float64],
-            density: NDArray[np.float64]
-    ) -> NDArray[np.float64]:
+        self,
+        distribution: NDArray[np.float_],
+        density: NDArray[np.float_]
+    ) -> NDArray[np.float_]:
         # In a mass-based strategy, the mass distribution is directly returned.
         return distribution
 
     def get_radius(
-            self,
-            distribution: NDArray[np.float64],
-            density: NDArray[np.float64]
-    ) -> NDArray[np.float64]:
+        self,
+        distribution: NDArray[np.float_],
+        density: NDArray[np.float_]
+    ) -> NDArray[np.float_]:
         # Calculate the volume of each particle from its mass and density,
         # then calculate the radius.
         volumes = distribution / density
         return (3 * volumes / (4 * np.pi)) ** (1 / 3)
 
     def get_total_mass(
-            self,
-            distribution: NDArray[np.float64],
-            concentration: NDArray[np.float64],
-            density: NDArray[np.float64]
-    ) -> np.float64:
+        self,
+        distribution: NDArray[np.float_],
+        concentration: NDArray[np.float_],
+        density: NDArray[np.float_]
+    ) -> np.float_:
         # Calculate the total mass by summing the product of the mass
         # distribution and its concentration.
         return np.sum(distribution * concentration)
 
+    def add_mass(
+        self,
+        distribution: NDArray[np.float_],
+        concentration: NDArray[np.float_],
+        density: NDArray[np.float_],
+        added_mass: NDArray[np.float_]
+    ) -> tuple[NDArray[np.float_], NDArray[np.float_]]:
+        # Add the mass to the distribution moving the bins
+        return (distribution + added_mass, concentration)
 
-class RadiiBasedStrategy(ParticleStrategy):
+
+class RadiiBasedMovingBin(ParticleStrategy):
     """
     A strategy for particles represented by their radius (distribution),
-    and particle conentraiton. Implementing the ParticleStrategy interface.
+    and particle concentration. Implementing the ParticleStrategy interface.
     This strategy calculates particle mass, radius, and total mass based on
-    the particle's radius, number concentraiton, and density.
+    the particle's radius, number concentration, and density.
     """
 
     def get_mass(
-            self,
-            distribution: NDArray[np.float64],
-            density: NDArray[np.float64]
-    ) -> NDArray[np.float64]:
+        self,
+        distribution: NDArray[np.float_],
+        density: NDArray[np.float_]
+    ) -> NDArray[np.float_]:
         # Calculate the volume of each particle
         volumes = 4 / 3 * np.pi * distribution ** 3
         return volumes * density  # Mass is volume multiplied by density
 
     def get_radius(
-            self,
-            distribution: NDArray[np.float64],
-            density: NDArray[np.float64],
-    ) -> NDArray[np.float64]:
+        self,
+        distribution: NDArray[np.float_],
+        density: NDArray[np.float_],
+    ) -> NDArray[np.float_]:
         return distribution  # Radii are directly available
 
     def get_total_mass(
-            self,
-            distribution: NDArray[np.float64],
-            concentration: NDArray[np.float64],
-            density: NDArray[np.float64]
-    ) -> np.float64:
+        self,
+        distribution: NDArray[np.float_],
+        concentration: NDArray[np.float_],
+        density: NDArray[np.float_]
+    ) -> np.float_:
         # Calculate individual masses
         masses = self.get_mass(distribution, density)
         # Total mass is the sum of individual masses times their concentrations
         return np.sum(masses * concentration)
 
+    def add_mass(
+        self,
+        distribution: NDArray[np.float_],
+        concentration: NDArray[np.float_],
+        density: NDArray[np.float_],
+        added_mass: NDArray[np.float_]
+    ) -> tuple[NDArray[np.float_], NDArray[np.float_]]:
+        # Add the the volume of the added mass to the distribution
+        new_volume = 4 / 3 * np.pi * (distribution ** 3 + added_mass / density)
+        return (new_volume ** (1 / 3), concentration)
 
-class SpeciatedMassStrategy(ParticleStrategy):
+
+class SpeciatedMassMovingBin(ParticleStrategy):
     """Strategy for particles with speciated mass distribution.
     Some particles may have different densities and their mass is
     distributed across different species. This strategy calculates mass,
@@ -153,44 +203,46 @@ class SpeciatedMassStrategy(ParticleStrategy):
     the particle concentration."""
 
     def get_mass(
-            self,
-            distribution: NDArray[np.float64],
-            density: NDArray[np.float64]
-    ) -> NDArray[np.float64]:
+        self,
+        distribution: NDArray[np.float_],
+        density: NDArray[np.float_]
+    ) -> NDArray[np.float_]:
         """
         Calculates the mass for each mass and species, leveraging densities
         for adjustment.
 
         Parameters:
-        - distribution (NDArray[np.float64]): A 2D array with rows
+        - distribution (NDArray[np.float_]): A 2D array with rows
             representing mass bins and columns representing species.
-        - densities (NDArray[np.float64]): An array of densities for each
+        - densities (NDArray[np.float_]): An array of densities for each
             species.
 
         Returns:
-        - NDArray[np.float64]: A 1D array of calculated masses for each mass
+        - NDArray[np.float_]: A 1D array of calculated masses for each mass
             bin. The sum of each column (species) in the distribution matrix.
         """
         # Broadcasting works natively as each column represents a species
+        if distribution.ndim == 1:
+            return distribution
         return np.sum(distribution, axis=1)
 
     def get_radius(
-            self,
-            distribution: NDArray[np.float64],
-            density: NDArray[np.float64]
-    ) -> NDArray[np.float64]:
+        self,
+        distribution: NDArray[np.float_],
+        density: NDArray[np.float_]
+    ) -> NDArray[np.float_]:
         """
         Calculates the radius for each mass bin and species, based on the
         volume derived from mass and density.
 
         Parameters:
-        - distribution (NDArray[np.float64]): A 2D array with rows representing
+        - distribution (NDArray[np.float_]): A 2D array with rows representing
             mass bins and columns representing species.
-        - dinsity (NDArray[np.float64]): An array of densities for each
+        - dinsity (NDArray[np.float_]): An array of densities for each
             species.
 
         Returns:
-        - NDArray[np.float64]: A 1D array of calculated radii for each mass
+        - NDArray[np.float_]: A 1D array of calculated radii for each mass
             bin.
         """
         # Calculate volume from mass and density, then derive radius
@@ -198,29 +250,43 @@ class SpeciatedMassStrategy(ParticleStrategy):
         return (3 * volumes / (4 * np.pi)) ** (1 / 3)
 
     def get_total_mass(
-            self,
-            distribution: NDArray[np.float64],
-            concentration: NDArray[np.float64],
-            density: NDArray[np.float64]
-    ) -> np.float64:
+        self,
+        distribution: NDArray[np.float_],
+        concentration: NDArray[np.float_],
+        density: NDArray[np.float_]
+    ) -> np.float_:
         """
         Calculates the total mass of all species, incorporating the
         concentration of particles per species.
 
         Parameters:
-        - distribution (NDArray[np.float64]): The mass distribution matrix.
-        - counts (NDArray[np.float64]): A 1D array with elements representing
+        - distribution (NDArray[np.float_]): The mass distribution matrix.
+        - counts (NDArray[np.float_]): A 1D array with elements representing
             the count of particles for each species.
 
         Returns:
-        - np.float64: The total mass of all particles.
+        - np.float_: The total mass of all particles.
         """
         # Calculate mass for each bin and species, then sum for total mass
         mass_per_species = self.get_mass(distribution, density)
         return np.sum(mass_per_species * concentration)
 
+    def add_mass(
+        self,
+        distribution: NDArray[np.float_],
+        concentration: NDArray[np.float_],
+        density: NDArray[np.float_],
+        added_mass: NDArray[np.float_]
+    ) -> tuple[NDArray[np.float_], NDArray[np.float_]]:
+        # Add the mass to the distribution moving the bins
+        # limit add to zero, total mass cannot be negative
+        new_mass = np.maximum(
+            distribution*concentration+added_mass, 0)/concentration
+        return (concentration, new_mass)
 
-def create_particle_strategy(particle_representation: str) -> ParticleStrategy:
+
+def particle_strategy_factory(
+        particle_representation: str) -> ParticleStrategy:
     """
     Factory function for creating instances of particle strategies based on
     the specified representation type.
@@ -228,7 +294,9 @@ def create_particle_strategy(particle_representation: str) -> ParticleStrategy:
     Parameters:
     - particle_type (str): The type of particle representation, determining
     which strategy instance to create.
-    [mass_based, radii_based, speciated_mass]
+        - mass_based_moving_bin
+        - radii_based_moving_bin
+        - speciated_mass_moving_bin
 
     Returns:
     - An instance of ParticleStrategy corresponding to the specified
@@ -237,12 +305,12 @@ def create_particle_strategy(particle_representation: str) -> ParticleStrategy:
     Raises:
     - ValueError: If an unknown particle type is specified.
     """
-    if particle_representation == "mass_based":
-        return MassBasedStrategy()
-    if particle_representation == "radii_based":
-        return RadiiBasedStrategy()
-    if particle_representation == "speciated_mass":
-        return SpeciatedMassStrategy()
+    if particle_representation == "mass_based_moving_bin":
+        return MassBasedMovingBin()
+    if particle_representation == "radii_based_moving_bin":
+        return RadiiBasedMovingBin()
+    if particle_representation == "speciated_mass_moving_bin":
+        return SpeciatedMassMovingBin()
     raise ValueError(f"Unknown particle strategy: {particle_representation}")
 
 
@@ -258,24 +326,28 @@ class Particle:
 
     Attributes:
     - strategy (ParticleStrategy): The computation strategy for particle
-    properties.
-    - distribution (NDArray[np.float64]): The distribution data for the
+    representations.
+    - activity (ParticleActivityStrategy): The activity strategy for the
+    partial pressure calculations.
+    - surface (SurfaceStrategy): The surface strategy for surface tension and
+    Kelvin effect.
+    - distribution (NDArray[np.float_]): The distribution data for the
     particles, which could represent sizes, masses, or another relevant metric.
-    - density (np.float64): The density of the material from which the
+    - density (np.float_): The density of the material from which the
     particles are made.
-    - concentration (NDArray[np.float64]): The concentration of particles
+    - concentration (NDArray[np.float_]): The concentration of particles
     within the distribution.
-    - charge (Optional[NDArray[np.float64]]): The charge distribution of the
-    particles.
-    - shape_factor (Optional[NDArray[np.float64]]): The shape factor
-    distribution of the particles.
     """
 
-    def __init__(self,
-                 strategy: ParticleStrategy,
-                 distribution: NDArray[np.float64],
-                 density: NDArray[np.float64],
-                 concentration: NDArray[np.float64]):
+    def __init__(
+        self,
+        strategy: ParticleStrategy,
+        activity: ParticleActivityStrategy,
+        surface: SurfaceStrategy,
+        distribution: NDArray[np.float_],
+        density: NDArray[np.float_],
+        concentration: NDArray[np.float_]
+    ):  # pylint: disable=too-many-arguments
         """
         Initializes a Particle instance with a strategy, distribution,
         density, and concentration.
@@ -283,66 +355,70 @@ class Particle:
         Parameters:
         - strategy (ParticleStrategy): The strategy to use for particle
         property calculations.
-        - distribution (NDArray[np.float64]): The distribution of particle
+        - distribution (NDArray[np.float_]): The distribution of particle
         sizes or masses.
-        - density (np.float64): The material density of the particles.
-        - concentration (NDArray[np.float64]): The concentration of each size
+        - density (np.float_): The material density of the particles.
+        - concentration (NDArray[np.float_]): The concentration of each size
         or mass in the distribution.
         """
         self.strategy = strategy
+        self.activity = activity
+        self.surface = surface
         self.distribution = distribution
         self.density = density
         self.concentration = concentration
-        # Initialize optional attributes
-        self.charge = None
-        self.shape_factor = None
-        # self.viscosity = None
 
-    def set_charge(self, charge: NDArray[np.float64]):
-        """
-        Sets the charge distribution for the particles.
-
-        Parameters:
-        - charge (NDArray[np.float64]): The charge distribution across the
-        particles.
-        """
-        self.charge = charge
-
-    def set_shape_factor(self, shape_factor: NDArray[np.float64]):
-        """
-        Sets the shape factor distribution for the particles.
-
-        Parameters:
-        - shape_factor (NDArray[np.float64]): The shape factor distribution
-        across the particles.
-        """
-        self.shape_factor = shape_factor
-
-    def get_mass(self) -> NDArray[np.float64]:
+    def get_mass(self) -> NDArray[np.float_]:
         """
         Returns the mass of the particles as calculated by the strategy.
 
         Returns:
-        - NDArray[np.float64]: The mass of the particles.
+        - NDArray[np.float_]: The mass of the particles.
         """
         return self.strategy.get_mass(self.distribution, self.density)
 
-    def get_radius(self) -> NDArray[np.float64]:
+    def get_radius(self) -> NDArray[np.float_]:
         """
         Returns the radius of the particles as calculated by the strategy.
 
         Returns:
-        - NDArray[np.float64]: The radius of the particles.
+        - NDArray[np.float_]: The radius of the particles.
         """
         return self.strategy.get_radius(self.distribution, self.density)
 
-    def get_total_mass(self) -> np.float64:
+    def get_total_mass(self) -> np.float_:
         """
         Returns the total mass of the particles as calculated by the strategy,
         taking into account the distribution and concentration.
 
         Returns:
-            np.float64: The total mass of the particles.
+            np.float_: The total mass of the particles.
         """
         return self.strategy.get_total_mass(
             self.distribution, self.concentration, self.density)
+
+    def add_mass(self, added_mass: NDArray[np.float_]) -> None:
+        """
+        Adds mass to the particle distribution, updating the concentration
+        and distribution arrays.
+
+        Parameters:
+        - added_mass (NDArray[np.float_]): The mass to be added per
+            distribution bin.
+        """
+        self.concentration, self.distribution = self.strategy.add_mass(
+            self.distribution, self.concentration, self.density, added_mass)
+
+    def add_concentration(
+        self,
+        added_concentration: NDArray[np.float_]
+    ) -> None:
+        """
+        Adds concentration to the particle distribution, updating the
+        concentration array.
+
+        Parameters:
+        - added_concentration (NDArray[np.float_]): The concentration to be
+            added per distribution bin.
+        """
+        self.concentration += added_concentration

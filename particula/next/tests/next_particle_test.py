@@ -3,13 +3,19 @@
 import numpy as np
 import pytest
 from particula.next.particle import (
-    MassBasedStrategy, RadiiBasedStrategy, SpeciatedMassStrategy,
-    create_particle_strategy, Particle)
+    MassBasedMovingBin, RadiiBasedMovingBin, SpeciatedMassMovingBin,
+    particle_strategy_factory, Particle)
+from particula.next.surface import VolumeSurfaceStrategy
+from particula.next.particle_activity import MassIdealActivity
+from particula.next.surface import surface_strategy_factory
 
 
-mass_based_strategy = MassBasedStrategy()
-radii_based_strategy = RadiiBasedStrategy()
-speciated_mass_strategy = SpeciatedMassStrategy()
+mass_based_strategy = MassBasedMovingBin()
+radii_based_strategy = RadiiBasedMovingBin()
+speciated_mass_strategy = SpeciatedMassMovingBin()
+surface_strategy = VolumeSurfaceStrategy()
+activity_strategy = MassIdealActivity()
+surface = surface_strategy_factory()
 
 
 def test_mass_based_strategy_mass():
@@ -130,33 +136,35 @@ def test_speciated_mass_strategy_get_total_mass():
 
 
 @pytest.mark.parametrize("representation, expected_strategy_type", [
-    ("mass_based", MassBasedStrategy),
-    ("radii_based", RadiiBasedStrategy),
-    ("speciated_mass", SpeciatedMassStrategy),
+    ("mass_based_moving_bin", MassBasedMovingBin),
+    ("radii_based_moving_bin", RadiiBasedMovingBin),
+    ("speciated_mass_moving_bin", SpeciatedMassMovingBin),
 ])
-def test_create_particle_strategy(representation, expected_strategy_type):
-    """Parameterized test for create_particle_strategy."""
-    strategy = create_particle_strategy(representation)
+def test_particle_strategy_factory(representation, expected_strategy_type):
+    """Parameterized test for particle_strategy_factory."""
+    strategy = particle_strategy_factory(representation)
     assert isinstance(strategy, expected_strategy_type)
 
 
 @pytest.mark.parametrize("strategy, distribution, density, concentration", [
-    (MassBasedStrategy(),
+    (MassBasedMovingBin(),
      np.array([100, 200, 300], dtype=np.float64),
      np.float64(2.5),
      np.array([10, 20, 30], dtype=np.float64)),
-    (RadiiBasedStrategy(), np.array([1, 2, 3], dtype=np.float64),
+    (RadiiBasedMovingBin(),
+     np.array([1, 2, 3], dtype=np.float64),
      np.float64(5), np.array([10, 20, 30], dtype=np.float64)),
     # For SpeciatedMassStrategy, ensure distribution aligns with expected 2D
     # shape and densities are properly set
-    (SpeciatedMassStrategy(),
+    (SpeciatedMassMovingBin(),
      np.array([[100, 200], [300, 400]], dtype=np.float64),
      np.array([2.5, 3.5], dtype=np.float64),
      np.array([10, 20], dtype=np.float64)),
 ])
 def test_particle_properties(strategy, distribution, density, concentration):
     """Parameterized test for Particle properties."""
-    particle = Particle(strategy, distribution, density, concentration)
+    particle = Particle(strategy, activity_strategy, surface,
+                        distribution, density, concentration)
     mass = particle.get_mass()
     radius = particle.get_radius()
     total_mass = particle.get_total_mass()
@@ -164,6 +172,6 @@ def test_particle_properties(strategy, distribution, density, concentration):
     # Validate the types of the returned values
     assert isinstance(mass, np.ndarray)
     assert isinstance(radius, np.ndarray)
-    assert isinstance(total_mass, np.float64)
+    assert isinstance(total_mass, np.float_)
     # The value of the returned mass, radius, and total_mass should be correct
     # they are already tested in the strategy tests
